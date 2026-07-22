@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Lock, Stethoscope, Sparkles, Info } from "lucide-react";
 
 export const Route = createFileRoute("/demo")({
@@ -304,6 +304,3 @@ function DemoScreen() {
     </div>
   );
 }
-
-// keep the eslint import graph honest
-void useEffect;
