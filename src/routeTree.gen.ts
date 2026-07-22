@@ -9,38 +9,96 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NotesIndexRouteImport } from './routes/notes.index'
+import { Route as NotesNoteIdRouteImport } from './routes/notes.$noteId'
+import { Route as ConsultationsNewRouteImport } from './routes/consultations.new'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotesIndexRoute = NotesIndexRouteImport.update({
+  id: '/notes/',
+  path: '/notes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotesNoteIdRoute = NotesNoteIdRouteImport.update({
+  id: '/notes/$noteId',
+  path: '/notes/$noteId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsultationsNewRoute = ConsultationsNewRouteImport.update({
+  id: '/consultations/new',
+  path: '/consultations/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
+  '/consultations/new': typeof ConsultationsNewRoute
+  '/notes/$noteId': typeof NotesNoteIdRoute
+  '/notes/': typeof NotesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
+  '/consultations/new': typeof ConsultationsNewRoute
+  '/notes/$noteId': typeof NotesNoteIdRoute
+  '/notes': typeof NotesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
+  '/consultations/new': typeof ConsultationsNewRoute
+  '/notes/$noteId': typeof NotesNoteIdRoute
+  '/notes/': typeof NotesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/settings'
+    | '/consultations/new'
+    | '/notes/$noteId'
+    | '/notes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/settings' | '/consultations/new' | '/notes/$noteId' | '/notes'
+  id:
+    | '__root__'
+    | '/'
+    | '/settings'
+    | '/consultations/new'
+    | '/notes/$noteId'
+    | '/notes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettingsRoute: typeof SettingsRoute
+  ConsultationsNewRoute: typeof ConsultationsNewRoute
+  NotesNoteIdRoute: typeof NotesNoteIdRoute
+  NotesIndexRoute: typeof NotesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +106,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notes/': {
+      id: '/notes/'
+      path: '/notes'
+      fullPath: '/notes/'
+      preLoaderRoute: typeof NotesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notes/$noteId': {
+      id: '/notes/$noteId'
+      path: '/notes/$noteId'
+      fullPath: '/notes/$noteId'
+      preLoaderRoute: typeof NotesNoteIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/consultations/new': {
+      id: '/consultations/new'
+      path: '/consultations/new'
+      fullPath: '/consultations/new'
+      preLoaderRoute: typeof ConsultationsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettingsRoute: SettingsRoute,
+  ConsultationsNewRoute: ConsultationsNewRoute,
+  NotesNoteIdRoute: NotesNoteIdRoute,
+  NotesIndexRoute: NotesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
