@@ -126,12 +126,18 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouter().state.location.pathname;
+  const isBareRoute = pathname.startsWith("/demo");
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
+      {isBareRoute ? (
         <Outlet />
-      </AppShell>
+      ) : (
+        <AppShell>
+          <Outlet />
+        </AppShell>
+      )}
     </QueryClientProvider>
   );
 }
