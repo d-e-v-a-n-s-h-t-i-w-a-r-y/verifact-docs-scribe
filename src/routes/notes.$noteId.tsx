@@ -1,14 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { TopBar } from "@/components/app-shell";
 import { ensureSeeded } from "@/lib/mock-data";
 import {
   useStore,
   editSection,
   signNote,
+  updateNote,
   type NoteSections,
 } from "@/lib/store";
-import { ChevronDown, ChevronRight, Lock, Play, Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { exportMarkdown, exportPdf } from "@/lib/export";
+import { ChevronDown, ChevronRight, Lock, Play, Check, Download, FileText, FileType } from "lucide-react";
 
 export const Route = createFileRoute("/notes/$noteId")({
   head: () => ({
