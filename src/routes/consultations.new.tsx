@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { TopBar } from "@/components/app-shell";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { ensureSeeded, } from "@/lib/mock-data";
+import { pickCase } from "@/lib/mock-cases";
 import { upsertNote, type Note, type NoteType } from "@/lib/store";
 
 export const Route = createFileRoute("/consultations/new")({
@@ -51,6 +52,7 @@ function NewConsultation() {
     setPhase("processing");
     setTimeout(() => {
       const id = `n-${Date.now().toString(36)}`;
+      const mock = pickCase(type);
       const note: Note = {
         id,
         patientName: name.trim(),
@@ -60,18 +62,8 @@ function NewConsultation() {
         status: "pending",
         editedFields: {},
         editsCount: 0,
-        sections: {
-          chiefComplaint: "New consultation — transcribed on-device. Draft generated for review.",
-          hpi: `Patient ${name} (${mrn}) seen for ${type.toLowerCase()}. Full history captured from ${fmt(seconds)} of recorded consultation. Clinician should verify the transcribed history before signing.`,
-          examination: "Examination findings dictated during consultation. Please review for accuracy.",
-          diagnosis: "Working diagnosis to be confirmed by clinician.",
-          treatment: "Treatment plan drafted from consultation. Verify medication doses and route.",
-          followUp: "Follow-up interval and safety-net advice to be confirmed.",
-        },
-        transcript: [
-          { speaker: "DOCTOR", time: "00:02", text: "Placeholder transcript — replace with your consultation." },
-          { speaker: "PATIENT", time: "00:06", text: "This is a demo consultation captured by Verifact." },
-        ],
+        sections: mock.sections,
+        transcript: mock.transcript,
       };
       upsertNote(note);
       navigate({ to: "/notes/$noteId", params: { noteId: id } });
