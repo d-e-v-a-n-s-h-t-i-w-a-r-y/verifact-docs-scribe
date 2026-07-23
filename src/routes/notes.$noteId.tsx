@@ -185,9 +185,25 @@ function ReviewScreen() {
                 Consultation {new Date(note.consultTime).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
               </span>
             </div>
-            <span className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{note.editsCount}</span> edit{note.editsCount === 1 ? "" : "s"} made
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{note.editsCount}</span> edit{note.editsCount === 1 ? "" : "s"} made
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
+                  <Download className="h-3.5 w-3.5" /> Export
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onSelect={() => { exportPdf(note); toast.success("PDF downloaded"); }}>
+                    <FileType className="mr-2 h-4 w-4" /> Download as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => { exportMarkdown(note); toast.success("Markdown downloaded"); }}>
+                    <FileText className="mr-2 h-4 w-4" /> Download as Markdown
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </header>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
