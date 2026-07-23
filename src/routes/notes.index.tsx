@@ -106,12 +106,13 @@ function NoteHistory() {
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Review time</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium text-right">Export</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
                     No notes match your search.
                   </td>
                 </tr>
@@ -128,6 +129,25 @@ function NoteHistory() {
                   <td className="px-4 py-3.5 text-muted-foreground">{n.type}</td>
                   <td className="px-4 py-3.5 text-muted-foreground tabular-nums">{fmtReview(n.reviewSeconds)}</td>
                   <td className="px-4 py-3.5"><StatusPill status={n.status} /></td>
+                  <td className="px-4 py-3.5 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                        aria-label={`Export ${n.patientName}`}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onSelect={() => { exportPdf(n); toast.success("PDF downloaded"); }}>
+                          <FileType className="mr-2 h-4 w-4" /> Download PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => { exportMarkdown(n); toast.success("Markdown downloaded"); }}>
+                          <FileText className="mr-2 h-4 w-4" /> Download Markdown
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -137,3 +157,6 @@ function NoteHistory() {
     </>
   );
 }
+
+// keep imports referenced
+void Download;
