@@ -91,6 +91,20 @@ function SettingsPage() {
             </Field>
           </div>
         </Card>
+
+        <div className="flex justify-end">
+          <button
+            onClick={() =>
+              toast.success("Settings saved", {
+                description: `${template} · ${name} · ${department}`,
+                icon: <Check className="h-4 w-4" />,
+              })
+            }
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground shadow-sm hover:opacity-90"
+          >
+            <Check className="h-4 w-4" /> Save changes
+          </button>
+        </div>
       </div>
     </>
   );
