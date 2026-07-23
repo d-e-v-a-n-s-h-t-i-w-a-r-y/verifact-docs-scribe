@@ -158,5 +158,3 @@ function NoteHistory() {
   );
 }
 
-// keep imports referenced
-void Download;
