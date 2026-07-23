@@ -1,9 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { TopBar } from "@/components/app-shell";
 import { ensureSeeded } from "@/lib/mock-data";
 import { useStore, type Note } from "@/lib/store";
-import { Search } from "lucide-react";
+import { exportMarkdown, exportPdf } from "@/lib/export";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, Download, FileType, FileText, MoreHorizontal } from "lucide-react";
 
 export const Route = createFileRoute("/notes/")({
   head: () => ({
