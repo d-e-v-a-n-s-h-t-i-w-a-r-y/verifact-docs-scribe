@@ -1,14 +1,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { TopBar } from "@/components/app-shell";
 import { ensureSeeded } from "@/lib/mock-data";
 import {
   useStore,
   editSection,
   signNote,
+  updateNote,
   type NoteSections,
 } from "@/lib/store";
-import { ChevronDown, ChevronRight, Lock, Play, Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { exportMarkdown, exportPdf } from "@/lib/export";
+import { ChevronDown, ChevronRight, Lock, Play, Check, Download, FileText, FileType } from "lucide-react";
 
 export const Route = createFileRoute("/notes/$noteId")({
   head: () => ({
@@ -176,9 +185,25 @@ function ReviewScreen() {
                 Consultation {new Date(note.consultTime).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
               </span>
             </div>
-            <span className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{note.editsCount}</span> edit{note.editsCount === 1 ? "" : "s"} made
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{note.editsCount}</span> edit{note.editsCount === 1 ? "" : "s"} made
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
+                  <Download className="h-3.5 w-3.5" /> Export
+                  <ChevronDown className="h-3 w-3" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onSelect={() => { exportPdf(note); toast.success("PDF downloaded"); }}>
+                    <FileType className="mr-2 h-4 w-4" /> Download as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => { exportMarkdown(note); toast.success("Markdown downloaded"); }}>
+                    <FileText className="mr-2 h-4 w-4" /> Download as Markdown
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </header>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -215,7 +240,18 @@ function ReviewScreen() {
                   <span className="text-muted-foreground">·</span>
                   <span className="text-muted-foreground">Signed by Dr. Aisha Raman</span>
                 </div>
-                <button className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">
+                <button
+                  onClick={() => {
+                    if (window.confirm("Request unlock for this signed note? An audit-log entry will be created and the note will re-open for editing.")) {
+                      updateNote(note!.id, (n) => ({ ...n, status: "pending" }));
+                      finalRef.current = null;
+                      startRef.current = Date.now();
+                      setElapsed(0);
+                      toast.success("Note unlocked — audit entry recorded");
+                    }
+                  }}
+                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                >
                   Request unlock
                 </button>
               </div>
@@ -225,7 +261,10 @@ function ReviewScreen() {
                   Review time <span className="tabular-nums font-medium text-foreground">{fmt(elapsed)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">
+                  <button
+                    onClick={() => toast.success("Draft saved", { description: `${note!.editsCount} edit${note!.editsCount === 1 ? "" : "s"} preserved locally.` })}
+                    className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                  >
                     Save Draft
                   </button>
                   <button
