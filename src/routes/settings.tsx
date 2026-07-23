@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import { TopBar } from "@/components/app-shell";
-import { Lock, ShieldCheck, Cpu, WifiOff } from "lucide-react";
+import { Lock, ShieldCheck, Cpu, WifiOff, Check } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
