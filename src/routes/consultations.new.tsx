@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { TopBar } from "@/components/app-shell";
 import { Mic, Square, Loader2 } from "lucide-react";
 import { ensureSeeded, } from "@/lib/mock-data";
+import { pickCase } from "@/lib/mock-cases";
 import { upsertNote, type Note, type NoteType } from "@/lib/store";
 
 export const Route = createFileRoute("/consultations/new")({
