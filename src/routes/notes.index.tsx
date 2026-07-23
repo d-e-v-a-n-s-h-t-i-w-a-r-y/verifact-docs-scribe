@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Download, FileType, FileText, MoreHorizontal } from "lucide-react";
+import { Search, FileType, FileText, MoreHorizontal } from "lucide-react";
 
 export const Route = createFileRoute("/notes/")({
   head: () => ({
