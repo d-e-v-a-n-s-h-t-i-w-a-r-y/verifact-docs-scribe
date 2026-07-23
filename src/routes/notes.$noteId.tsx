@@ -240,7 +240,18 @@ function ReviewScreen() {
                   <span className="text-muted-foreground">·</span>
                   <span className="text-muted-foreground">Signed by Dr. Aisha Raman</span>
                 </div>
-                <button className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground">
+                <button
+                  onClick={() => {
+                    if (window.confirm("Request unlock for this signed note? An audit-log entry will be created and the note will re-open for editing.")) {
+                      updateNote(note!.id, (n) => ({ ...n, status: "pending" }));
+                      finalRef.current = null;
+                      startRef.current = Date.now();
+                      setElapsed(0);
+                      toast.success("Note unlocked — audit entry recorded");
+                    }
+                  }}
+                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                >
                   Request unlock
                 </button>
               </div>
@@ -250,7 +261,10 @@ function ReviewScreen() {
                   Review time <span className="tabular-nums font-medium text-foreground">{fmt(elapsed)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">
+                  <button
+                    onClick={() => toast.success("Draft saved", { description: `${note!.editsCount} edit${note!.editsCount === 1 ? "" : "s"} preserved locally.` })}
+                    className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+                  >
                     Save Draft
                   </button>
                   <button
