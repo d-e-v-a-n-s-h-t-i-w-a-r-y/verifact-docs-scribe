@@ -8,12 +8,11 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-
 import { Toaster } from "sonner";
-
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "../components/app-shell";
+import { AuthProvider, useAuth } from "../lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -126,20 +125,52 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+/** Redirects unauthenticated users to /login; redirects logged-in users away from /login */
+function AuthGate({ children }: { children: ReactNode }) {
+  const { doctor, loading } = useAuth();
+  const router = useRouter();
+  const pathname = router.state.location.pathname;
+  const isPublicRoute = pathname === "/login" || pathname.startsWith("/demo");
+
+  useEffect(() => {
+    if (loading) return;
+    if (!doctor && !isPublicRoute) {
+      router.navigate({ to: "/login" });
+    }
+    if (doctor && pathname === "/login") {
+      router.navigate({ to: "/" });
+    }
+  }, [doctor, loading, isPublicRoute, pathname]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouter().state.location.pathname;
-  const isBareRoute = pathname.startsWith("/demo");
+  const isBareRoute = pathname.startsWith("/demo") || pathname === "/login";
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isBareRoute ? (
-        <Outlet />
-      ) : (
-        <AppShell>
-          <Outlet />
-        </AppShell>
-      )}
+      <AuthProvider>
+        <AuthGate>
+          {isBareRoute ? (
+            <Outlet />
+          ) : (
+            <AppShell>
+              <Outlet />
+            </AppShell>
+          )}
+        </AuthGate>
+      </AuthProvider>
       <Toaster position="bottom-right" richColors closeButton />
     </QueryClientProvider>
   );

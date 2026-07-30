@@ -10,6 +10,7 @@ import {
   updateNote,
   type NoteSections,
 } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +50,8 @@ function fmt(s: number) {
 function ReviewScreen() {
   useEffect(() => { ensureSeeded(); }, []);
   const { noteId } = Route.useParams();
+  const { doctor } = useAuth();
+  const doctorName = doctor?.displayName ?? "Doctor";
   const note = useStore((s) => s.notes.find((n) => n.id === noteId));
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -195,10 +198,10 @@ function ReviewScreen() {
                   <ChevronDown className="h-3 w-3" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem onSelect={() => { exportPdf(note); toast.success("PDF downloaded"); }}>
+                  <DropdownMenuItem onSelect={() => { exportPdf(note, doctorName); toast.success("PDF downloaded"); }}>
                     <FileType className="mr-2 h-4 w-4" /> Download as PDF
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => { exportMarkdown(note); toast.success("Markdown downloaded"); }}>
+                  <DropdownMenuItem onSelect={() => { exportMarkdown(note, doctorName); toast.success("Markdown downloaded"); }}>
                     <FileText className="mr-2 h-4 w-4" /> Download as Markdown
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -238,7 +241,7 @@ function ReviewScreen() {
                     Reviewed in <span className="tabular-nums font-medium">{fmt(note.reviewSeconds ?? 0)}</span>
                   </span>
                   <span className="text-muted-foreground">·</span>
-                  <span className="text-muted-foreground">Signed by Dr. Aisha Raman</span>
+                  <span className="text-muted-foreground">Signed by {doctorName}</span>
                 </div>
                 <button
                   onClick={() => {

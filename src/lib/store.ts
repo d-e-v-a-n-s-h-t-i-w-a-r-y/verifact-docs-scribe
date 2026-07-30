@@ -99,3 +99,51 @@ export function signNote(id: string, reviewSeconds: number) {
     signedAt: new Date().toISOString(),
   }));
 }
+
+// ─── Sync with Supabase ──────────────────────────────────────────────────────
+
+import { supabase } from "./supabase";
+
+export async function fetchAndUpsertConsultation(consultationId: string) {
+  const { data, error } = await supabase
+    .from("consultations")
+    .select(`
+      id,
+      consult_type,
+      status,
+      created_at,
+      transcript_json,
+      patients (name, mrn),
+      notes (sections_json, edit_count, review_seconds, signed_at)
+    `)
+    .eq("id", consultationId)
+    .single();
+
+  if (error || !data) {
+    console.error("Failed to fetch consultation from Supabase:", error);
+    return;
+  }
+
+  // Handle case where notes array might be returned (one-to-many relationship in Supabase)
+  const noteRow = Array.isArray(data.notes) ? data.notes[0] : data.notes;
+  const patientRow = Array.isArray(data.patients) ? data.patients[0] : data.patients;
+
+  const noteData: Note = {
+    id: data.id,
+    patientName: patientRow?.name ?? "Unknown Patient",
+    mrn: patientRow?.mrn ?? "UNKNOWN",
+    consultTime: data.created_at,
+    type: (data.consult_type as NoteType) ?? "OPD Note",
+    status: (data.status as NoteStatus) ?? "pending",
+    sections: noteRow?.sections_json ?? {
+      chiefComplaint: "", hpi: "", examination: "", diagnosis: "", treatment: "", followUp: ""
+    },
+    editedFields: {},
+    editsCount: noteRow?.edit_count ?? 0,
+    transcript: data.transcript_json ?? [],
+    reviewSeconds: noteRow?.review_seconds,
+    signedAt: noteRow?.signed_at,
+  };
+
+  upsertNote(noteData);
+}

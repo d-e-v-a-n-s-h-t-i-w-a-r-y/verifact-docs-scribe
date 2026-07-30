@@ -14,6 +14,7 @@ import {
   User,
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import { useAuth } from "@/lib/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -134,15 +135,27 @@ export function TopBar({
 }
 
 function ProfileChip() {
+  const { doctor, signOut } = useAuth();
   const [open, setOpen] = useState<null | "profile" | "compliance" | "logout">(null);
+
+  const displayName = doctor?.displayName ?? "Doctor";
+  const initials = doctor?.initials ?? "DR";
+  const email = doctor?.user.email ?? "";
+
+  async function handleSignOut() {
+    setOpen(null);
+    await signOut();
+    toast.success("Signed out successfully.");
+  }
+
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-border py-1 pl-1 pr-2.5 text-sm hover:bg-muted">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-            AR
+            {initials}
           </span>
-          <span className="hidden text-sm font-medium sm:inline">Dr. Aisha Raman</span>
+          <span className="hidden text-sm font-medium sm:inline">{displayName}</span>
           <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
@@ -162,12 +175,12 @@ function ProfileChip() {
       <Dialog open={open === "profile"} onOpenChange={(v) => !v && setOpen(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Dr. Aisha Raman</DialogTitle>
-            <DialogDescription>Internal Medicine · Signing clinician</DialogDescription>
+            <DialogTitle>{displayName}</DialogTitle>
+            <DialogDescription>{email} · Signing clinician</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between border-b border-border py-2"><span className="text-muted-foreground">GMC / registration</span><span>7412093</span></div>
-            <div className="flex justify-between border-b border-border py-2"><span className="text-muted-foreground">Signature</span><span>Aisha Raman, MD</span></div>
+            <div className="flex justify-between border-b border-border py-2"><span className="text-muted-foreground">User ID</span><span className="truncate max-w-[160px] font-mono text-xs">{doctor?.user.id.slice(0, 8)}…</span></div>
+            <div className="flex justify-between border-b border-border py-2"><span className="text-muted-foreground">Email</span><span>{email}</span></div>
             <div className="flex justify-between py-2"><span className="text-muted-foreground">Default template</span><span>OPD Note</span></div>
           </div>
         </DialogContent>
@@ -177,13 +190,13 @@ function ProfileChip() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Lock className="h-4 w-4 text-accent" />Compliance status</DialogTitle>
-            <DialogDescription>All processing runs on this workstation.</DialogDescription>
+            <DialogDescription>Audio processed via AssemblyAI, notes via Groq.</DialogDescription>
           </DialogHeader>
           <ul className="divide-y divide-border rounded-lg border border-border text-sm">
-            <li className="flex justify-between px-3 py-2"><span className="text-muted-foreground">Model runtime</span><span>On-device v3.2</span></li>
-            <li className="flex justify-between px-3 py-2"><span className="text-muted-foreground">Cloud calls</span><span>None</span></li>
-            <li className="flex justify-between px-3 py-2"><span className="text-muted-foreground">Audio retention</span><span>Deleted after sign-off</span></li>
-            <li className="flex justify-between px-3 py-2"><span className="text-muted-foreground">Audit log</span><span>Local, encrypted</span></li>
+            <li className="flex justify-between px-3 py-2"><span className="text-muted-foreground">Transcription</span><span>AssemblyAI (encrypted)</span></li>
+            <li className="flex justify-between px-3 py-2"><span className="text-muted-foreground">Note generation</span><span>Groq (Llama 3.3)</span></li>
+            <li className="flex justify-between px-3 py-2"><span className="text-muted-foreground">Audio retention</span><span>Deleted after transcription</span></li>
+            <li className="flex justify-between px-3 py-2"><span className="text-muted-foreground">Data scoping</span><span>Row-level security (RLS)</span></li>
           </ul>
         </DialogContent>
       </Dialog>
@@ -192,15 +205,12 @@ function ProfileChip() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Log out of Verifact?</DialogTitle>
-            <DialogDescription>Any unsigned drafts remain on this device.</DialogDescription>
+            <DialogDescription>Any unsigned drafts remain saved in the database.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <button onClick={() => setOpen(null)} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted">Cancel</button>
             <button
-              onClick={() => {
-                setOpen(null);
-                toast.success("Signed out (demo)");
-              }}
+              onClick={handleSignOut}
               className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
             >
               Log out

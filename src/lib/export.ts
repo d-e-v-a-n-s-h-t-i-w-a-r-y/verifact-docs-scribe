@@ -25,14 +25,15 @@ function triggerDownload(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 
-export function exportMarkdown(note: Note) {
+export function exportMarkdown(note: Note, signedByName?: string) {
   const date = new Date(note.signedAt ?? note.consultTime).toLocaleString();
+  const signerLabel = signedByName ?? "Unknown";
   const lines: string[] = [];
   lines.push(`# ${note.type} — ${note.patientName}`);
   lines.push("");
   lines.push(`**MRN:** ${note.mrn}  `);
   lines.push(`**Consultation:** ${date}  `);
-  lines.push(`**Status:** ${note.status}${note.status === "signed" ? " (signed by Dr. Aisha Raman)" : ""}`);
+  lines.push(`**Status:** ${note.status}${note.status === "signed" ? ` (signed by ${signerLabel})` : ""}`);
   lines.push("");
   lines.push("---");
   lines.push("");
@@ -46,7 +47,8 @@ export function exportMarkdown(note: Note) {
   triggerDownload(blob, `${safeFile(note.patientName)}_${safeFile(note.type)}.md`);
 }
 
-export function exportPdf(note: Note) {
+export function exportPdf(note: Note, signedByName?: string) {
+  const signerLabel = signedByName ?? "Unknown";
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -74,7 +76,7 @@ export function exportPdf(note: Note) {
   doc.text(`MRN ${note.mrn}    ·    ${note.type}    ·    ${date}`, margin, y);
   y += 14;
   if (note.status === "signed") {
-    doc.text(`Signed by Dr. Aisha Raman`, margin, y);
+    doc.text(`Signed by ${signerLabel}`, margin, y);
     y += 14;
   }
 

@@ -2,17 +2,18 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { TopBar } from "@/components/app-shell";
 import { Mic, Square, Loader2 } from "lucide-react";
-import { ensureSeeded, } from "@/lib/mock-data";
-import { pickCase } from "@/lib/mock-cases";
-import { upsertNote, type Note, type NoteType } from "@/lib/store";
+import { ensureSeeded } from "@/lib/mock-data";
+import { type NoteType } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/consultations/new")({
   head: () => ({
     meta: [
       { title: "New Consultation — Verifact" },
-      { name: "description", content: "Record a consultation. Verifact transcribes and drafts a structured note locally." },
+      { name: "description", content: "Record a consultation. Verifact transcribes and drafts a structured note." },
       { property: "og:title", content: "New Consultation — Verifact" },
-      { property: "og:description", content: "Record. Transcribe locally. Draft a structured note for review." },
+      { property: "og:description", content: "Record. Transcribe. Draft a structured note for review." },
     ],
   }),
   component: NewConsultation,
@@ -30,6 +31,10 @@ function NewConsultation() {
   const [type, setType] = useState<NoteType>("OPD Note");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Audio recording refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
   useEffect(() => {
     if (phase === "recording") {
       timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -42,32 +47,131 @@ function NewConsultation() {
 
   const canRecord = name.trim() && mrn.trim();
 
-  function start() {
+  async function start() {
     if (!canRecord) return;
-    setSeconds(0);
-    setPhase("recording");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.start(200); // chunk every 200ms
+      setSeconds(0);
+      setPhase("recording");
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      toast.error("Could not access microphone.");
+    }
   }
 
-  function stop() {
+  async function stop() {
     setPhase("processing");
-    setTimeout(() => {
-      const id = `n-${Date.now().toString(36)}`;
-      const mock = pickCase(type);
-      const note: Note = {
-        id,
-        patientName: name.trim(),
-        mrn: mrn.trim(),
-        consultTime: new Date().toISOString(),
-        type,
-        status: "pending",
-        editedFields: {},
-        editsCount: 0,
-        sections: mock.sections,
-        transcript: mock.transcript,
-      };
-      upsertNote(note);
-      navigate({ to: "/notes/$noteId", params: { noteId: id } });
-    }, 1800);
+
+    // 1. Stop recording and get the final blob
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      const stoppedPromise = new Promise((resolve) => {
+        mediaRecorderRef.current!.onstop = resolve;
+      });
+      mediaRecorderRef.current.stop();
+      await stoppedPromise;
+      // Stop all microphone tracks
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+    }
+
+    try {
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+
+      // Check auth status
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("You must be logged in to upload audio. (RLS is enabled)");
+      }
+
+      const fileName = `${Date.now()}.webm`;
+      const filePath = `${user.id}/${fileName}`;
+
+      // 2. Upload audio to 'consult-audio'
+      const { error: uploadError } = await supabase.storage
+        .from('consult-audio')
+        .upload(filePath, audioBlob);
+
+      if (uploadError) throw uploadError;
+
+      // Insert or get patient
+      const { data: patient, error: patientError } = await supabase
+        .from('patients')
+        .insert({ name: name.trim(), mrn: mrn.trim(), doctor_id: user.id })
+        .select()
+        .single();
+
+      if (patientError) throw patientError;
+
+      // 3. Create consultation row with status='processing'
+      const { data: consultation, error: consultError } = await supabase
+        .from('consultations')
+        .insert({
+          patient_id: patient.id,
+          doctor_id: user.id,
+          audio_url: filePath,
+          status: 'processing',
+          consult_type: type
+        })
+        .select()
+        .single();
+
+      if (consultError) throw consultError;
+
+      // 4. Set up realtime subscription to wait for status changes
+      const channel = supabase.channel(`consultation_${consultation.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'consultations',
+            filter: `id=eq.${consultation.id}`
+          },
+          async (payload) => {
+            if (payload.new.status === 'draft') {
+              channel.unsubscribe();
+              toast.success("Transcription complete!");
+              
+              // 5. Fetch the actual generated note from Supabase and put it in local state
+              const { fetchAndUpsertConsultation } = await import("@/lib/store");
+              await fetchAndUpsertConsultation(consultation.id);
+
+              // 6. Navigate to the Review screen for that ID
+              navigate({ to: "/notes/$noteId", params: { noteId: consultation.id } });
+            } else if (payload.new.status === 'failed') {
+              channel.unsubscribe();
+              toast.error("Transcription failed.");
+              setPhase("idle");
+            }
+          }
+        )
+        .subscribe();
+
+      // Invoke Edge Function
+      const { error: invokeError } = await supabase.functions.invoke('transcribe-consult', {
+        body: { consultation_id: consultation.id }
+      });
+
+      if (invokeError) {
+        channel.unsubscribe();
+        throw invokeError;
+      }
+
+    } catch (error: any) {
+      console.error("Error processing consultation:", error);
+      toast.error(error.message || "An error occurred during processing.");
+      setPhase("idle");
+    }
   }
 
   return (
@@ -156,7 +260,7 @@ function NewConsultation() {
                 <Loader2 className="h-12 w-12 animate-spin text-accent" />
               </div>
               <p className="mt-6 text-sm text-foreground">Transcribing and generating note…</p>
-              <p className="mt-1 text-xs text-muted-foreground">Running locally on this device.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Waiting for Edge Function.</p>
             </>
           )}
         </div>
