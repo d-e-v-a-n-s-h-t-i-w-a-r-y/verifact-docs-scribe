@@ -1,0 +1,174 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: "Inter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+}
+
+:root {
+  --radius: 0.5rem;
+  /* Dark Charcoal Enterprise Clinical Theme (Default) */
+  --background: #090d16;
+  --foreground: #f8fafc;
+
+  --card: #111827;
+  --card-foreground: #f8fafc;
+
+  --popover: #111827;
+  --popover-foreground: #f8fafc;
+
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+
+  --accent: #14b8a6;
+  --accent-foreground: #042f2e;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #14b8a6;
+
+  --sidebar: #0b1120;
+  --sidebar-foreground: #f8fafc;
+}
+
+/* Light Clinical Mode Option */
+.light {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #0d9488;
+  --accent-foreground: #ffffff;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0d9488;
+
+  --sidebar: #f1f5f9;
+  --sidebar-foreground: #0f172a;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html, body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv11";
+    line-height: 1.5;
+  }
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+}
+
+/* Custom Clean Scrollbars for Panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* Evidence Segment Highlight Pulse */
+@keyframes evidencePulse {
+  0% {
+    background-color: rgba(20, 184, 166, 0.35);
+    box-shadow: 0 0 12px rgba(20, 184, 166, 0.4);
+  }
+  50% {
+    background-color: rgba(20, 184, 166, 0.2);
+  }
+  100% {
+    background-color: rgba(20, 184, 166, 0.08);
+  }
+}
+
+.evidence-highlight-active {
+  animation: evidencePulse 2.5s ease-in-out infinite;
+  border-left-color: #14b8a6 !important;
+}
+
+/* 3-Panel CSS Grid Layout Utilities */
+.workspace-grid-overview {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(450px, 1.25fr) minmax(320px, 0.9fr);
+  gap: 0;
+  height: calc(100vh - 104px);
+  overflow: hidden;
+}
+
+@media (max-width: 1200px) {
+  .workspace-grid-overview {
+    grid-template-columns: minmax(260px, 0.9fr) minmax(400px, 1.3fr) minmax(280px, 0.9fr);
+  }
+}
+

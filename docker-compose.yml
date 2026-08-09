@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_MODEL=llama3.2:3b
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./backend/storage:/app/backend/storage
